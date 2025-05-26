@@ -1,4 +1,78 @@
 jQuery(document).ready(function($){
+	let swiper = null;
+
+	// Initialize Swiper
+	const initSwiper = () => {
+		if (swiper) {
+			swiper.destroy();
+		}
+
+		swiper = new Swiper('.pricing-swiper', {
+			slidesPerView: 1,
+			spaceBetween: 30,
+			pagination: {
+				el: '.swiper-pagination',
+				clickable: true,
+			},
+			navigation: {
+				nextEl: '.swiper-button-next',
+				prevEl: '.swiper-button-prev',
+			},
+			breakpoints: {
+				640: {
+					slidesPerView: 2,
+				},
+				1024: {
+					slidesPerView: 3,
+				}
+			}
+		});
+	};
+
+	// Initialize Swiper on page load
+	initSwiper();
+
+	// Handle pricing type switch
+	$(document).on('change', '.pricing-type-switcher input[name="pricing_type"]', function() {
+		const type = $(this).val();
+		const container = $(this).closest('.commerce-yar-pricing-table');
+		const theme = container.attr('data-theme') || 'default';
+
+		// Show loading state
+		container.addClass('loading');
+
+		// Make AJAX request to load new pricing
+		$.ajax({
+			url: commerceYarAjax.ajaxurl,
+			type: 'POST',
+			data: {
+				action: 'commerce_yar_load_pricing',
+				type: type,
+				theme: theme,
+				nonce: commerceYarAjax.nonce
+			},
+			success: function(response) {
+				if (response.success) {
+					// Replace content and reinitialize Swiper
+					container.html(response.data.html);
+					initSwiper();
+				}
+			},
+			complete: function() {
+				container.removeClass('loading');
+			}
+		});
+	});
+
+	// Handle window resize
+	let resizeTimer;
+	$(window).on('resize', function() {
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(function() {
+			initSwiper();
+		}, 250);
+	});
+
 	//hide the subtle gradient layer (.pricing-list > li::after) when pricing table has been scrolled to the end (mobile version only)
 	checkScrolling($('.pricing-body'));
 	$(window).on('resize', function(){
