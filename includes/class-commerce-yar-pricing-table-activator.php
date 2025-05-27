@@ -3,9 +3,10 @@ class Commerce_Yar_Pricing_Table_Activator {
     public static function activate() {
         global $wpdb;
         $charset_collate = $wpdb->get_charset_collate();
-        $table_name = $wpdb->prefix . 'commerce_yar_token';
-
-        $sql = "CREATE TABLE IF NOT EXISTS $table_name (
+        
+        // Create pricing table
+        $pricing_table = $wpdb->prefix . 'commerce_yar_token';
+        $sql_pricing = "CREATE TABLE IF NOT EXISTS $pricing_table (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             pricing_type varchar(20) NOT NULL,
             title varchar(255) NOT NULL,
@@ -19,11 +20,30 @@ class Commerce_Yar_Pricing_Table_Activator {
             PRIMARY KEY  (id)
         ) $charset_collate;";
 
+        // Create subscriptions table
+        $subscriptions_table = $wpdb->prefix . 'commerce_yar_subscriptions';
+        $sql_subscriptions = "CREATE TABLE IF NOT EXISTS $subscriptions_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            user_id bigint(20) NOT NULL,
+            plan_title varchar(255) NOT NULL,
+            plan_type varchar(50) NOT NULL,
+            price decimal(10,2) NOT NULL,
+            token varchar(255) NOT NULL,
+            payment_status varchar(50) NOT NULL,
+            transaction_id varchar(255),
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            expires_at datetime,
+            PRIMARY KEY  (id),
+            KEY user_id (user_id),
+            KEY token (token)
+        ) $charset_collate;";
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        dbDelta($sql_pricing);
+        dbDelta($sql_subscriptions);
 
         // Add default pricing data if table is empty
-        $count = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+        $count = $wpdb->get_var("SELECT COUNT(*) FROM $pricing_table");
         if ($count == 0) {
             $default_data = array(
                 array(
@@ -65,7 +85,7 @@ class Commerce_Yar_Pricing_Table_Activator {
             );
 
             foreach ($default_data as $data) {
-                $wpdb->insert($table_name, $data);
+                $wpdb->insert($pricing_table, $data);
             }
         }
     }

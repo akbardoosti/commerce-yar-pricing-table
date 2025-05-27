@@ -10,35 +10,9 @@ class Commerce_Yar_Payment_Handler {
         global $wpdb;
         $this->table_name = $wpdb->prefix . 'commerce_yar_subscriptions';
         
-        add_action('init', array($this, 'create_tables'));
         add_action('wp_ajax_commerce_yar_initiate_payment', array($this, 'initiate_payment'));
         add_action('wp_ajax_nopriv_commerce_yar_initiate_payment', array($this, 'initiate_payment'));
         add_action('init', array($this, 'handle_payment_callback'));
-    }
-
-    public function create_tables() {
-        global $wpdb;
-        
-        $charset_collate = $wpdb->get_charset_collate();
-
-        $sql = "CREATE TABLE IF NOT EXISTS {$this->table_name} (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            user_id bigint(20) NOT NULL,
-            plan_title varchar(255) NOT NULL,
-            plan_type varchar(50) NOT NULL,
-            price decimal(10,2) NOT NULL,
-            token varchar(255) NOT NULL,
-            payment_status varchar(50) NOT NULL,
-            transaction_id varchar(255),
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            expires_at datetime,
-            PRIMARY KEY  (id),
-            KEY user_id (user_id),
-            KEY token (token)
-        ) $charset_collate;";
-
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
     }
 
     public function initiate_payment() {
@@ -201,12 +175,21 @@ class Commerce_Yar_Payment_Handler {
     private function store_subscription($order_data, $token, $transaction_id) {
         global $wpdb;
 
-        // Calculate expiration date
+        // Calculate expiration date based on plan type
         $expires_at = new DateTime();
-        if ($order_data['plan_data']['type'] === 'monthly') {
-            $expires_at->modify('+1 month');
-        } else {
-            $expires_at->modify('+1 year');
+        switch ($order_data['plan_data']['type']) {
+            case 'monthly':
+                $expires_at->modify('+1 month');
+                break;
+            case 'quarterly':
+                $expires_at->modify('+3 months');
+                break;
+            case 'biannual':
+                $expires_at->modify('+6 months');
+                break;
+            case 'yearly':
+                $expires_at->modify('+1 year');
+                break;
         }
 
         $wpdb->insert(
