@@ -9,7 +9,17 @@ if (!defined('ABSPATH')) {
  * @var array $atts Shortcode attributes
  */
 
-$pricing_data = get_option('commerce_yar_pricing_data', array());
+// Get cached pricing data
+$cache_key = 'commerce_yar_pricing_data_' . $atts['type'];
+$pricing_data = wp_cache_get($cache_key);
+
+if (false === $pricing_data) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'commerce_yar_token';
+    $pricing_data = $wpdb->get_results("SELECT * FROM $table_name", ARRAY_A);
+    wp_cache_set($cache_key, $pricing_data, '', 3600); // Cache for 1 hour
+}
+
 $style_data = get_option('commerce_yar_style_data', array());
 
 // Default style values
@@ -24,18 +34,13 @@ $style_data = wp_parse_args($style_data, array(
     'text_color' => '#333333'
 ));
 
-// Enqueue Swiper if not already enqueued
-if (!wp_script_is('swiper', 'enqueued')) {
-    wp_enqueue_style('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.css');
-    wp_enqueue_script('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.js', array(), null, true);
-}
-
-// Enqueue SweetAlert2 for beautiful dialogs
+// Enqueue necessary scripts and styles
+wp_enqueue_style('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.css');
+wp_enqueue_script('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.js', array(), null, true);
 wp_enqueue_style('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css');
 wp_enqueue_script('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js', array('jquery'), null, true);
 
 $pricing_type = isset($atts['type']) ? $atts['type'] : 'monthly';
-$prices = isset($pricing_data[$pricing_type]) ? $pricing_data[$pricing_type] : array();
 
 // Generate dynamic styles
 $dynamic_styles = "
@@ -64,6 +69,57 @@ $dynamic_styles = "
     .swiper-button-next, .swiper-button-prev {
         color: {$style_data['button_color']};
     }
+    .pricing-type-switcher {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .pricing-type-switcher label {
+        cursor: pointer;
+        padding: 8px 16px;
+        border: 1px solid {$style_data['button_color']};
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    
+    .pricing-type-switcher input:checked + span {
+        background-color: {$style_data['button_color']};
+        color: white;
+    }
+    
+    .pricing-type-switcher input {
+        display: none;
+    }
+    
+    .pricing-type-switcher span {
+        display: block;
+        padding: 8px 16px;
+    }
+    
+    .commerce-yar-loading {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .commerce-yar-loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid {$style_data['button_color']};
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
 </style>
 ";
 echo $dynamic_styles;
@@ -73,17 +129,30 @@ echo $dynamic_styles;
     <div class="pricing-type-switcher">
         <label>
             <input type="radio" name="pricing_type" value="monthly" <?php checked($pricing_type, 'monthly'); ?>>
-            ماهانه
+            <span>ماهانه</span>
+        </label>
+        <label>
+            <input type="radio" name="pricing_type" value="quarterly" <?php checked($pricing_type, 'quarterly'); ?>>
+            <span>سه ماهه</span>
+        </label>
+        <label>
+            <input type="radio" name="pricing_type" value="biannual" <?php checked($pricing_type, 'biannual'); ?>>
+            <span>شش ماهه</span>
         </label>
         <label>
             <input type="radio" name="pricing_type" value="yearly" <?php checked($pricing_type, 'yearly'); ?>>
-            سالانه
+            <span>سالانه</span>
         </label>
+    </div>
+
+    <div class="commerce-yar-loading">
+        <div class="spinner"></div>
     </div>
 
     <div class="swiper pricing-swiper">
         <div class="swiper-wrapper">
-            <?php foreach ($prices as $price) : ?>
+            <?php foreach ($pricing_data as $price) : 
+                if ($price['pricing_type'] === $pricing_type) : ?>
                 <div class="swiper-slide">
                     <div class="pricing-column">
                         <div class="pricing-header">
@@ -91,7 +160,24 @@ echo $dynamic_styles;
                             <div class="price">
                                 <?php echo number_format_i18n($price['price']); ?>
                                 <span class="currency">تومان</span>
-                                <span class="period">/<?php echo $pricing_type === 'monthly' ? 'ماه' : 'سال'; ?></span>
+                                <span class="period">/
+                                    <?php
+                                    switch ($pricing_type) {
+                                        case 'monthly':
+                                            echo 'ماه';
+                                            break;
+                                        case 'quarterly':
+                                            echo 'سه ماه';
+                                            break;
+                                        case 'biannual':
+                                            echo 'شش ماه';
+                                            break;
+                                        case 'yearly':
+                                            echo 'سال';
+                                            break;
+                                    }
+                                    ?>
+                                </span>
                             </div>
                         </div>
                         <div class="pricing-features">
@@ -109,13 +195,15 @@ echo $dynamic_styles;
                             </ul>
                         </div>
                         <div class="pricing-footer">
-                            <a href="<?php echo esc_url($price['button_link']); ?>" class="pricing-button">
+                            <a href="<?php echo esc_url($price['button_link']); ?>" 
+                               class="pricing-button" 
+                               data-price-code="<?php echo esc_attr($price['price_code']); ?>">
                                 <?php echo esc_html($price['button_text']); ?>
                             </a>
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            <?php endif; endforeach; ?>
         </div>
         <div class="swiper-pagination"></div>
         <div class="swiper-button-next"></div>
@@ -131,143 +219,16 @@ echo $dynamic_styles;
     </div>
 </div>
 
-<style>
-.commerce-yar-pricing-table {
-    direction: rtl;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.pricing-type-switcher {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.pricing-type-switcher label {
-    margin: 0 10px;
-    cursor: pointer;
-}
-
-.pricing-column {
-    height: 100%;
-    background: #ffffff;
-    padding: 20px;
-    text-align: center;
-    transition: transform 0.3s;
-}
-
-.pricing-column:hover {
-    transform: translateY(-5px);
-}
-
-.pricing-header {
-    margin-bottom: 20px;
-}
-
-.price {
-    font-size: 2em;
-    font-weight: bold;
-    margin: 10px 0;
-}
-
-.currency, .period {
-    font-size: 0.5em;
-    font-weight: normal;
-}
-
-.pricing-features ul {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 20px 0;
-}
-
-.pricing-features li {
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-}
-
-.pricing-footer {
-    padding-top: 20px;
-}
-
-/* Swiper customization */
-.swiper {
-    padding: 20px 40px;
-}
-
-.swiper-button-next,
-.swiper-button-prev {
-    transform: scale(0.7);
-}
-
-.swiper-pagination {
-    position: relative;
-    margin-top: 20px;
-}
-
-@media (max-width: 640px) {
-    .pricing-column {
-        margin-bottom: 20px;
-    }
-}
-
-/* Add to existing styles */
-.payment-processing-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.payment-processing-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 15px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Customize SweetAlert */
-.swal2-popup {
-    font-family: inherit;
-    direction: rtl;
-}
-
-.swal2-title, .swal2-content {
-    text-align: right;
-}
-
-.swal2-actions {
-    flex-direction: row-reverse;
-}
-</style>
-
 <script>
 jQuery(document).ready(function($) {
-    // Initialize Swiper
+    let swiper = null;
+    
     const initSwiper = () => {
-        const swiper = new Swiper('.pricing-swiper', {
+        if (swiper) {
+            swiper.destroy();
+        }
+        
+        swiper = new Swiper('.pricing-swiper', {
             slidesPerView: 1,
             spaceBetween: 30,
             pagination: {
@@ -289,14 +250,49 @@ jQuery(document).ready(function($) {
         });
     };
 
-    // Initialize Swiper on page load
     initSwiper();
 
-    // Handle pricing type switch
+    // Handle pricing type switch with loading state
     $('input[name="pricing_type"]').on('change', function() {
         const type = $(this).val();
-        // Reload shortcode with new type
-        // You'll need to implement AJAX here to reload the pricing table
+        const $container = $('.commerce-yar-pricing-table');
+        const $loading = $('.commerce-yar-loading');
+        
+        $loading.fadeIn();
+        
+        $.ajax({
+            url: commerceYarAjax.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'commerce_yar_get_pricing',
+                type: type,
+                nonce: commerceYarAjax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('.pricing-swiper .swiper-wrapper').html(response.data.html);
+                    initSwiper();
+                } else {
+                    Swal.fire({
+                        title: 'خطا',
+                        text: response.data.message || 'خطا در بارگذاری اطلاعات',
+                        icon: 'error',
+                        confirmButtonText: 'باشه'
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    title: 'خطا',
+                    text: 'خطا در برقراری ارتباط با سرور',
+                    icon: 'error',
+                    confirmButtonText: 'باشه'
+                });
+            },
+            complete: function() {
+                $loading.fadeOut();
+            }
+        });
     });
 
     // Handle plan selection
@@ -306,11 +302,13 @@ jQuery(document).ready(function($) {
         const button = $(this);
         const planTitle = button.closest('.pricing-column').find('h3').text();
         const planPrice = button.closest('.pricing-column').find('.price').text();
-        const planType = button.closest('.commerce-yar-pricing-table').find('input[name="pricing_type"]:checked').val();
+        const planType = $('input[name="pricing_type"]:checked').val();
+        const priceCode = button.data('price-code');
         const planData = {
             title: planTitle,
             price: planPrice,
             type: planType,
+            price_code: priceCode,
             button_link: button.attr('href')
         };
 
@@ -322,7 +320,7 @@ jQuery(document).ready(function($) {
                     <ul style="list-style: none; padding: 0;">
                         <li><strong>عنوان:</strong> ${planTitle}</li>
                         <li><strong>قیمت:</strong> ${planPrice}</li>
-                        <li><strong>نوع اشتراک:</strong> ${planType === 'monthly' ? 'ماهانه' : 'سالانه'}</li>
+                        <li><strong>نوع اشتراک:</strong> ${planType === 'monthly' ? 'ماهانه' : planType === 'yearly' ? 'سالانه' : planType === 'quarterly' ? 'سه ماهه' : 'شش ماهه'}</li>
                     </ul>
                     <p>آیا مایل به ادامه و پرداخت هستید؟</p>
                 </div>
