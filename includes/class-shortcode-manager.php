@@ -26,7 +26,6 @@ class Commerce_Yar_Shortcode_Manager {
     public function init() {
         add_shortcode('commerce_yar_pricing_table', array($this, 'render_pricing_table'));
     }
-
     /**
      * Handle AJAX request to load pricing table
      */

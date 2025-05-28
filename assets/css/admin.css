@@ -1,0 +1,124 @@
+.commerce-yar-admin-container {
+    margin: 20px 0;
+    max-width: 1200px;
+}
+.commerce-yar-admin-container,
+.commerce-yar-admin-container .wrap h1,
+.commerce-yar-admin-container .wrap h2,
+.commerce-yar-admin-container .wrap h3,
+.commerce-yar-admin-container .tab-content h2{
+    font-family: 'Vazirmatn';
+}
+
+.pricing-periods {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pricing-period {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+.pricing-period h3 {
+    margin-top: 0;
+    color: #23282d;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.plan-item {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    position: relative;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-group textarea {
+    height: 100px;
+}
+
+.form-group small {
+    display: block;
+    color: #666;
+    margin-top: 5px;
+}
+
+.delete-plan {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #dc3232;
+}
+
+.add-plan {
+    margin: 20px 0;
+}
+
+.submit-container {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.submit-container .spinner {
+    float: none;
+    margin: 0 10px;
+}
+
+/* Subscription table styles */
+.subscription-token {
+    display: inline-block;
+    padding: 2px 5px;
+    background: #f1f1f1;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-right: 5px;
+}
+
+.copy-token {
+    vertical-align: middle;
+}
+
+/* RTL Specific Styles */
+body.rtl .delete-plan {
+    right: auto;
+    left: 10px;
+}
+
+/* Responsive Styles */
+@media screen and (max-width: 782px) {
+    .form-group input[type="text"],
+    .form-group input[type="number"],
+    .form-group textarea {
+        max-width: 100%;
+    }
+    
+    .wp-list-table {
+        display: block;
+        overflow-x: auto;
+    }
+} 

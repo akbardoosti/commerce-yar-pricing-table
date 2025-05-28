@@ -18,6 +18,12 @@ define('COMMERCE_YAR_PRICING_PLUGIN_URL', plugin_dir_url(__FILE__));
 // Include required files
 require_once COMMERCE_YAR_PRICING_PLUGIN_DIR . 'includes/class-commerce-yar-pricing-table-activator.php';
 require_once COMMERCE_YAR_PRICING_PLUGIN_DIR . 'includes/class-commerce-yar-pricing-table-ajax.php';
+require_once COMMERCE_YAR_PRICING_PLUGIN_DIR . 'includes/class-payment-handler.php';
+
+// Include admin files if in admin area
+if (is_admin()) {
+    require_once COMMERCE_YAR_PRICING_PLUGIN_DIR . 'admin/admin-settings.php';
+}
 
 // Register activation hook
 register_activation_hook(__FILE__, array('Commerce_Yar_Pricing_Table_Activator', 'activate'));

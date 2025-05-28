@@ -363,6 +363,14 @@ a {
     color: #173d50;
     background-color: transparent;
 }
+.pricing-header .price {
+  font-family: 'Vazirmatn', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 12px;
+  gap: 5px;
+}
 
 .exclusive .pricing-header {
     color: #1bbc9d;
@@ -413,7 +421,6 @@ a {
 
 .currency {
     display: inline-block;
-    margin-top: 10px;
     vertical-align: top;
     font-size: 2rem;
     font-weight: 700;
@@ -449,7 +456,7 @@ a {
 .pricing-features li {
 	width: 100px;
 	float: left;
-	padding: 1.6em 1em;
+	padding: 0.5rem;
 	font-size: 1.5rem;
 	text-align: center;
 	white-space: nowrap;
@@ -470,7 +477,6 @@ a {
 .pricing-features li {
     float: none;
     width: auto;
-    padding: 1em;
 }
 
 .exclusive .pricing-features li {
@@ -755,4 +761,9 @@ a {
     -o-transform: perspective(2000px) rotateY(0);
     transform: perspective(2000px) rotateY(0);
   }
+}
+
+
+.pricing-column .pricing-header h3 {
+  font-family: 'Vazirmatn', sans-serif;
 }

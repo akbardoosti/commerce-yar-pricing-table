@@ -41,24 +41,7 @@ class Commerce_Yar_Pricing_Table_Ajax {
                         <div class="price">
                             <?php echo number_format_i18n($price['price']); ?>
                             <span class="currency">تومان</span>
-                            <span class="period">/
-                                <?php
-                                switch ($type) {
-                                    case 'monthly':
-                                        echo 'ماه';
-                                        break;
-                                    case 'quarterly':
-                                        echo 'سه ماه';
-                                        break;
-                                    case 'biannual':
-                                        echo 'شش ماه';
-                                        break;
-                                    case 'yearly':
-                                        echo 'سال';
-                                        break;
-                                }
-                                ?>
-                            </span>
+                            
                         </div>
                     </div>
                     <div class="pricing-features">

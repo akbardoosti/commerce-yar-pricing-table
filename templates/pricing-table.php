@@ -35,6 +35,8 @@ $style_data = wp_parse_args($style_data, array(
 ));
 
 // Enqueue necessary scripts and styles
+wp_enqueue_style('varzir-matn-css', COMMERCE_YAR_PRICING_PLUGIN_URL . 'assets/css/vazir-matn-font-face.css');
+wp_enqueue_style('commerce-yar-style', COMMERCE_YAR_PRICING_PLUGIN_URL . 'css/style.css');
 wp_enqueue_style('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.css');
 wp_enqueue_script('swiper', 'https://unpkg.com/swiper/swiper-bundle.min.js', array(), null, true);
 wp_enqueue_style('sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css');
@@ -45,6 +47,9 @@ $pricing_type = isset($atts['type']) ? $atts['type'] : 'monthly';
 // Generate dynamic styles
 $dynamic_styles = "
 <style>
+    .commerce-yar-pricing-table {
+        position: relative;
+    }
     .commerce-yar-pricing-table .pricing-column {
         border: {$style_data['border_size']}px solid {$style_data['border_color']};
         border-radius: {$style_data['border_radius']}px;
@@ -52,7 +57,10 @@ $dynamic_styles = "
         font-size: {$style_data['font_size']}px;
         font-weight: {$style_data['font_weight']};
         color: {$style_data['text_color']};
+        padding: 20px;
+        font-family: 'Vazirmatn', sans-serif;
     }
+    
     .commerce-yar-pricing-table .pricing-button {
         background-color: {$style_data['button_color']};
         color: #ffffff;
@@ -62,6 +70,7 @@ $dynamic_styles = "
         text-decoration: none;
         display: inline-block;
         transition: opacity 0.3s;
+        min-width: 150px;
     }
     .commerce-yar-pricing-table .pricing-button:hover {
         opacity: 0.9;
@@ -78,7 +87,6 @@ $dynamic_styles = "
     
     .pricing-type-switcher label {
         cursor: pointer;
-        padding: 8px 16px;
         border: 1px solid {$style_data['button_color']};
         border-radius: 4px;
         transition: all 0.3s;
@@ -96,6 +104,7 @@ $dynamic_styles = "
     .pricing-type-switcher span {
         display: block;
         padding: 8px 16px;
+        font-family: 'Vazirmatn', sans-serif;
     }
     
     .commerce-yar-loading {
@@ -110,6 +119,8 @@ $dynamic_styles = "
         align-items: center;
         z-index: 1000;
         display: none;
+        align-items: center;
+        justify-content: center;
     }
     
     .commerce-yar-loading .spinner {
@@ -154,40 +165,23 @@ echo $dynamic_styles;
             <?php foreach ($pricing_data as $price) : 
                 if ($price['pricing_type'] === $pricing_type) : ?>
                 <div class="swiper-slide">
-                    <div class="pricing-column">
+                    <div class="pricing-column" style="text-align: center;">
                         <div class="pricing-header">
                             <h3><?php echo esc_html($price['title']); ?></h3>
                             <div class="price">
                                 <?php echo number_format_i18n($price['price']); ?>
                                 <span class="currency">تومان</span>
-                                <span class="period">/
-                                    <?php
-                                    switch ($pricing_type) {
-                                        case 'monthly':
-                                            echo 'ماه';
-                                            break;
-                                        case 'quarterly':
-                                            echo 'سه ماه';
-                                            break;
-                                        case 'biannual':
-                                            echo 'شش ماه';
-                                            break;
-                                        case 'yearly':
-                                            echo 'سال';
-                                            break;
-                                    }
-                                    ?>
-                                </span>
                             </div>
                         </div>
                         <div class="pricing-features">
-                            <ul>
+                            <ul style="line-height: 30px;list-style: none;
+    display: flex;flex-direction: column;align-items: center;">
                                 <?php
                                 $features = explode("\n", $price['features']);
                                 foreach ($features as $feature) :
                                     if (!empty(trim($feature))) :
                                 ?>
-                                    <li><?php echo esc_html(trim($feature)); ?></li>
+                                    <li style="border-bottom: solid 1px #eee;"><?php echo esc_html(trim($feature)); ?></li>
                                 <?php
                                     endif;
                                 endforeach;
@@ -259,6 +253,7 @@ jQuery(document).ready(function($) {
         const $loading = $('.commerce-yar-loading');
         
         $loading.fadeIn();
+        $loading.css('display', 'flex')
         
         $.ajax({
             url: commerceYarAjax.ajaxurl,
