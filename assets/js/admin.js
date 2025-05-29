@@ -1,10 +1,24 @@
 jQuery(document).ready(function($) {
-    // Plan template for adding new plans
-    function getPlanTemplate(periodType) {
-        return `
+    // Tab switching
+    $('.nav-tab-wrapper a').click(function(e) {
+        e.preventDefault();
+        $('.nav-tab-wrapper a').removeClass('nav-tab-active');
+        $(this).addClass('nav-tab-active');
+        $('.tab-content').hide();
+        $($(this).attr('href')).show();
+    });
+
+    // Initialize first tab
+    $('.tab-content').hide();
+    $('#pricing-settings').show();
+
+    // Add new plan
+    $('.add-plan').click(function() {
+        const period = $(this).data('period');
+        const planHtml = `
             <div class="plan-item">
                 <input type="hidden" name="id[]" value="">
-                <input type="hidden" name="pricing_type[]" value="${periodType}">
+                <input type="hidden" name="pricing_type[]" value="${period}">
                 
                 <div class="form-group">
                     <label>عنوان:</label>
@@ -14,6 +28,12 @@ jQuery(document).ready(function($) {
                 <div class="form-group">
                     <label>قیمت (تومان):</label>
                     <input type="number" name="price[]" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>قیمت با تخفیف (تومان):</label>
+                    <input type="number" name="sale_price[]">
+                    <small>اگر تخفیف ندارد خالی بگذارید</small>
                 </div>
                 
                 <div class="form-group">
@@ -40,24 +60,50 @@ jQuery(document).ready(function($) {
                 <button type="button" class="button delete-plan">حذف پلن</button>
             </div>
         `;
-    }
-
-    // Add new plan
-    $('.add-plan').on('click', function() {
-        const periodType = $(this).data('period');
-        const template = getPlanTemplate(periodType);
-        $(this).before(template);
+        
+        $(this).before(planHtml);
     });
 
     // Delete plan
     $(document).on('click', '.delete-plan', function() {
-        $(this).closest('.plan-item').fadeOut(300, function() {
-            $(this).remove();
+        $(this).closest('.plan-item').remove();
+    });
+
+    // Save pricing data
+    $('#commerce-yar-pricing-form').on('submit', function(e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $submitButton = $form.find('button[type="submit"]');
+        const originalButtonText = $submitButton.text();
+        
+        $submitButton.text('در حال ذخیره...').prop('disabled', true);
+        
+        $.ajax({
+            url: commerceYarAdmin.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'commerce_yar_save_pricing',
+                nonce: commerceYarAdmin.nonce,
+                ...$(this).serializeArray()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('تنظیمات با موفقیت ذخیره شد.');
+                } else {
+                    alert('خطا در ذخیره تنظیمات: ' + response.data);
+                }
+            },
+            error: function() {
+                alert('خطا در برقراری ارتباط با سرور');
+            },
+            complete: function() {
+                $submitButton.text(originalButtonText).prop('disabled', false);
+            }
         });
     });
 
-    // Copy token
-    $('.copy-token').on('click', function() {
+    // Copy subscription token
+    $('.copy-token').click(function() {
         const token = $(this).data('token');
         const tempInput = $('<input>');
         $('body').append(tempInput);
@@ -66,50 +112,10 @@ jQuery(document).ready(function($) {
         tempInput.remove();
         
         const $button = $(this);
+        const originalText = $button.text();
         $button.text('کپی شد!');
         setTimeout(() => {
-            $button.text('کپی');
+            $button.text(originalText);
         }, 2000);
-    });
-
-    // Form submission
-    $('#commerce-yar-pricing-form').on('submit', function(e) {
-        e.preventDefault();
-        
-        const $form = $(this);
-        const $submitButton = $form.find('button[type="submit"]');
-        const $spinner = $form.find('.spinner');
-        
-        // Show loading state
-        $submitButton.prop('disabled', true);
-        $spinner.addClass('is-active');
-        
-        // Collect form data
-        const formData = new FormData(this);
-        formData.append('action', 'commerce_yar_save_pricing');
-        formData.append('nonce', commerceYarAdmin.nonce);
-        
-        // Send AJAX request
-        $.ajax({
-            url: commerceYarAdmin.ajaxurl,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    alert('تغییرات با موفقیت ذخیره شد.');
-                } else {
-                    alert(response.data.message || 'خطا در ذخیره تغییرات.');
-                }
-            },
-            error: function() {
-                alert('خطا در برقراری ارتباط با سرور.');
-            },
-            complete: function() {
-                $submitButton.prop('disabled', false);
-                $spinner.removeClass('is-active');
-            }
-        });
     });
 }); 

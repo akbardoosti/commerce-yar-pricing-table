@@ -39,9 +39,28 @@ class Commerce_Yar_Pricing_Table_Ajax {
                     <div class="pricing-header">
                         <h3><?php echo esc_html($price['title']); ?></h3>
                         <div class="price">
-                            <?php echo number_format_i18n($price['price']); ?>
-                            <span class="currency">تومان</span>
-                            
+                            <?php if (!empty($price['sale_price']) && $price['sale_price'] < $price['price']) : 
+                                $discount_percent = round((($price['price'] - $price['sale_price']) / $price['price']) * 100);
+                            ?>
+                                <?php if(!empty($price['sale_price']) && floatval($price['sale_price']) > 0):?>
+                                    <div class="sale-price">
+                                        <?php echo number_format_i18n($price['sale_price']); ?>
+                                        <span class="currency">تومان</span>
+                                    </div>
+                                    <div class="original-price">
+                                        <del><?php echo number_format_i18n($price['price']); ?> تومان</del>
+                                        <span class="discount-badge" ><?php echo $discount_percent; ?>% تخفیف</span>
+                                    </div>
+                                <?php else:?>
+                                    <div class="original-price">
+                                        <?php echo number_format_i18n($price['price']); ?>
+                                        <span class="currency">تومان</span>
+                                    </div>
+                                <?php endif;?>
+                            <?php else : ?>
+                                <?php echo number_format_i18n($price['price']); ?>
+                                <span class="currency">تومان</span>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="pricing-features">
@@ -109,6 +128,7 @@ class Commerce_Yar_Pricing_Table_Ajax {
                         'pricing_type' => sanitize_text_field($price['pricing_type']),
                         'title' => sanitize_text_field($price['title']),
                         'price' => floatval($price['price']),
+                        'sale_price' => floatval($price['sale_price']),
                         'features' => sanitize_textarea_field($price['features']),
                         'button_text' => sanitize_text_field($price['button_text']),
                         'button_link' => esc_url_raw($price['button_link']),

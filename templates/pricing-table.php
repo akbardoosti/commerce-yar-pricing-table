@@ -169,8 +169,28 @@ echo $dynamic_styles;
                         <div class="pricing-header">
                             <h3><?php echo esc_html($price['title']); ?></h3>
                             <div class="price">
-                                <?php echo number_format_i18n($price['price']); ?>
-                                <span class="currency">تومان</span>
+                                <?php if (!empty($price['sale_price']) && $price['sale_price'] < $price['price']) : 
+                                    $discount_percent = round((($price['price'] - $price['sale_price']) / $price['price']) * 100);
+                                ?>
+                                    <?php if(!empty($price['sale_price']) && floatval($price['sale_price']) > 0):?>
+                                        <div class="sale-price">
+                                            <?php echo number_format_i18n($price['sale_price']); ?>
+                                            <span class="currency">تومان</span>
+                                        </div>
+                                        <div class="original-price">
+                                            <del><?php echo number_format_i18n($price['price']); ?> تومان</del>
+                                            <span class="discount-badge" ><?php echo $discount_percent; ?>% تخفیف</span>
+                                        </div>
+                                    <?php else:?>
+                                        <div class="original-price">
+                                            <?php echo number_format_i18n($price['price']); ?>
+                                            <span class="currency">تومان</span>
+                                        </div>
+                                    <?php endif;?>
+                                <?php else : ?>
+                                    <?php echo number_format_i18n($price['price']); ?>
+                                    <span class="currency">تومان</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="pricing-features">
@@ -296,12 +316,22 @@ jQuery(document).ready(function($) {
         
         const button = $(this);
         const planTitle = button.closest('.pricing-column').find('h3').text();
-        const planPrice = button.closest('.pricing-column').find('.price').text();
+        const hasSalePrice = button.closest('.pricing-column').find('.sale-price').length > 0;
+        const planPrice = hasSalePrice 
+            ? button.closest('.pricing-column').find('.sale-price').text()
+            : button.closest('.pricing-column').find('.price').text();
+        const originalPrice = hasSalePrice 
+            ? button.closest('.pricing-column').find('.original-price del').text()
+            : planPrice;
+        const discountBadge = hasSalePrice 
+            ? button.closest('.pricing-column').find('.discount-badge').text()
+            : '';
         const planType = $('input[name="pricing_type"]:checked').val();
         const priceCode = button.data('price-code');
         const planData = {
             title: planTitle,
             price: planPrice,
+            original_price: originalPrice,
             type: planType,
             price_code: priceCode,
             button_link: button.attr('href')
@@ -314,7 +344,13 @@ jQuery(document).ready(function($) {
                     <p>شما در حال انتخاب پلن زیر هستید:</p>
                     <ul style="list-style: none; padding: 0;">
                         <li><strong>عنوان:</strong> ${planTitle}</li>
-                        <li><strong>قیمت:</strong> ${planPrice}</li>
+                        ${hasSalePrice ? `
+                            <li><strong>قیمت اصلی:</strong> <del>${originalPrice}</del></li>
+                            <li><strong>قیمت با تخفیف:</strong> ${planPrice}</li>
+                            <li><strong>میزان تخفیف:</strong> ${discountBadge}</li>
+                        ` : `
+                            <li><strong>قیمت:</strong> ${planPrice}</li>
+                        `}
                         <li><strong>نوع اشتراک:</strong> ${planType === 'monthly' ? 'ماهانه' : planType === 'yearly' ? 'سالانه' : planType === 'quarterly' ? 'سه ماهه' : 'شش ماهه'}</li>
                     </ul>
                     <p>آیا مایل به ادامه و پرداخت هستید؟</p>

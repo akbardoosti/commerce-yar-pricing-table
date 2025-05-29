@@ -224,6 +224,12 @@ class Commerce_Yar_Admin_Settings {
                                                     </div>
                                                     
                                                     <div class="form-group">
+                                                        <label>قیمت با تخفیف (تومان):</label>
+                                                        <input type="number" name="sale_price[]" value="<?php echo esc_attr($plan['sale_price'] ?? ''); ?>">
+                                                        <small>اگر تخفیف ندارد خالی بگذارید</small>
+                                                    </div>
+                                                    
+                                                    <div class="form-group">
                                                         <label>ویژگی‌ها:</label>
                                                         <textarea name="features[]" required><?php echo esc_textarea($plan['features']); ?></textarea>
                                                         <small>هر ویژگی را در یک خط جدید وارد کنید</small>
@@ -416,6 +422,7 @@ class Commerce_Yar_Admin_Settings {
         
         $titles = $_POST['title'];
         $prices = $_POST['price'];
+        $sale_prices = $_POST['sale_price'];
         $features = $_POST['features'];
         $button_texts = $_POST['button_text'];
         $button_links = $_POST['button_link'];
@@ -437,12 +444,13 @@ class Commerce_Yar_Admin_Settings {
                         'pricing_type' => sanitize_text_field($pricing_types[$i]),
                         'title' => sanitize_text_field($titles[$i]),
                         'price' => floatval($prices[$i]),
+                        'sale_price' => floatval($sale_prices[$i]),
                         'features' => sanitize_textarea_field($features[$i]),
                         'button_text' => sanitize_text_field($button_texts[$i]),
                         'button_link' => esc_url_raw($button_links[$i]),
                         'price_code' => sanitize_text_field($price_codes[$i])
                     ),
-                    array('%s', '%s', '%f', '%s', '%s', '%s', '%s')
+                    array('%s', '%s', '%f', '%f', '%s', '%s', '%s', '%s', '%s')
                 );
             }
             // die(json_encode( $titles));

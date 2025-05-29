@@ -370,8 +370,16 @@ a {
   justify-content: center;
   margin-top: 12px;
   gap: 5px;
+  flex-direction: column;
 }
-
+.discount-badge {
+  background-color: #ff4757;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  display: inline-block;
+}
 .exclusive .pricing-header {
     color: #1bbc9d;
     background-color: transparent;
@@ -766,4 +774,6 @@ a {
 
 .pricing-column .pricing-header h3 {
   font-family: 'Vazirmatn', sans-serif;
+  font-weight: 700;
+  font-size: 2.5rem;
 }

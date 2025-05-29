@@ -121,4 +121,39 @@ body.rtl .delete-plan {
         display: block;
         overflow-x: auto;
     }
+}
+
+/* Sale Price Styles */
+.commerce-yar-pricing-table .original-price {
+    margin-bottom: 5px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.commerce-yar-pricing-table .original-price del {
+    color: #999;
+    font-size: 0.9em;
+}
+
+.commerce-yar-pricing-table .discount-badge {
+    background-color: #ff4757;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    display: inline-block;
+}
+
+.commerce-yar-pricing-table .sale-price {
+    color: #2ecc71;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.commerce-yar-pricing-table .sale-price .currency {
+    font-size: 0.8em;
+    margin-right: 5px;
+    color: #666;
 } 
